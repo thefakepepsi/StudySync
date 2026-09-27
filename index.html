@@ -155,22 +155,17 @@
   <div class="modal">
     <h2>Talk to a person</h2>
     <p>Connect live with a human career counselor. Choose where you'd like to meet.</p>
-    <button class="choice meet" id="meetChoice"><span class="dot"></span><span id="meetLabel">Google Meet</span></button>
-    <button class="choice zoom" id="zoomChoice"><span class="dot"></span><span id="zoomLabel">Zoom</span></button>
+    <button class="choice meet" id="meetChoice"><span class="dot"></span> Google Meet</button>
+    <button class="choice zoom" id="zoomChoice"><span class="dot"></span> Zoom</button>
     <button class="modal-close" id="closeModal">Not now</button>
   </div>
 </div>
 
 <script>
-// ---- Configuration ----
+// ---- Configure your real meeting links here ----
 const MEET_LINK = "https://meet.google.com/your-meeting-code";
 const ZOOM_LINK = "https://zoom.us/j/your-meeting-id";
-
-// Paste your Mistral API key here
-// IMPORTANT: Do not publish a real API key in a public website.
-const MISTRAL_API_KEY = "mstrl_RYls2VAWzPIlPuOke4smtXUtcII1Ifqy_1xfeQH";
-const MISTRAL_MODEL = "mistral-small-latest";
-// -----------------------
+// --------------------------------------------------
 
 const messagesEl = document.getElementById('messages');
 const input = document.getElementById('input');
@@ -180,7 +175,6 @@ const overlay = document.getElementById('overlay');
 let history = [];
 let currentLang = 'en';
 let detectedRegion = null;
-let backendReady = true;
 
 const LANGS = {
   en:{name:'English', native:'English', rtl:false, askExpert:'Ask an Expert', placeholder:"Tell me what's on your mind…", send:'Send', modalTitle:'Talk to a person', modalDesc:"Connect live with a human career counselor. Choose where you'd like to meet.", meet:'Google Meet', zoom:'Zoom', notNow:'Not now', localizedFor:'Localized for', change:'change'},
@@ -227,11 +221,6 @@ function detectRegion(){
   return null;
 }
 
-function updateSendButtonState(){
-  const hasText = input.value.trim().length > 0;
-  sendBtn.disabled = !hasText || !backendReady;
-}
-
 function applyLanguage(){
   const L = LANGS[currentLang];
   document.documentElement.setAttribute('dir', L.rtl ? 'rtl' : 'ltr');
@@ -240,8 +229,8 @@ function applyLanguage(){
   sendBtn.textContent = L.send;
   document.querySelector('.modal h2').textContent = L.modalTitle;
   document.querySelector('.modal p').textContent = L.modalDesc;
-  document.getElementById('meetLabel').textContent = L.meet;
-  document.getElementById('zoomLabel').textContent = L.zoom;
+  document.querySelector('.choice.meet').lastChild.textContent = ' ' + L.meet;
+  document.querySelector('.choice.zoom').lastChild.textContent = ' ' + L.zoom;
   document.getElementById('closeModal').textContent = L.notNow;
   document.getElementById('locChange').textContent = L.change;
   updateLocBar();
@@ -284,24 +273,15 @@ function populateLangSelect(){
     applyLanguage();
     if(backendReady && history.length){
       showTyping();
-      sendBtn.disabled = true;
-      input.disabled = true;
-      const langUserMsg = {
-        role: 'user',
-        content: `(The user just switched the interface language to ${LANGS[currentLang].name}. Briefly acknowledge in ${LANGS[currentLang].name} and continue the conversation naturally from where it left off.)`
-      };
       try{
-        const text = await callBackend(buildSystemPrompt(), [...history, langUserMsg]);
+        const text = await callBackend(buildSystemPrompt(), [
+          ...history,
+          {role:'user', content:`(The user just switched the interface language to ${LANGS[currentLang].name}. Briefly acknowledge in ${LANGS[currentLang].name} and continue the conversation naturally from where it left off.)`}
+        ]);
         hideTyping();
         addMessage('ai', text);
-        history.push(langUserMsg);
         history.push({role:'assistant', content: text});
-      }catch(e){ 
-        hideTyping(); 
-      }finally{
-        input.disabled = false;
-        updateSendButtonState();
-      }
+      }catch(e){ hideTyping(); }
     }
   });
 }
@@ -339,99 +319,80 @@ function showTyping(){
   messagesEl.appendChild(div);
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
-
 function hideTyping(){
   const el = document.getElementById('typingIndicator');
   if(el) el.remove();
 }
 
-async functioasync function callBackend(systemPrompt, msgHistory){
-  if(!MISTRAL_API_KEY || MISTRAL_API_KEY === 'YOUR_MISTRAL_API_KEY'){
-    throw new Error('No Mistral API key set');
+
+const GEMINI_API_KEY = 'AQ.Ab8RN6LrPNWePq0mw_VeHGifx4YWtv-CC_KGXVPyfUHQYagfRA';
+const GEMINI_MODEL = 'gemini-flash-latest';
+let backendReady = true;
+
+async function callBackend(systemPrompt, msgHistory){
+  if(GEMINI_API_KEY === 'PASTE_YOUR_GEMINI_API_KEY_HERE'){
+    throw new Error('No API key set');
   }
-
-  const messages = [
-    { role: 'system', content: systemPrompt },
-    ...msgHistory.map(m => ({
-      role: m.role === 'assistant' ? 'assistant' : 'user',
-      content: m.content
-    }))
-  ];
-
-  const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${MISTRAL_API_KEY}`
-    },
-    body: JSON.stringify({
-      model: MISTRAL_MODEL,
-      messages,
-      temperature: 0.7,
-      max_tokens: 600
-    })
-  });
-
-  const raw = await res.text().catch(() => '');
-
+  const contents = msgHistory.map(m => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content }]
+  }));
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': GEMINI_API_KEY
+      },
+      body: JSON.stringify({
+        contents,
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        generationConfig: { temperature: 0.7, maxOutputTokens: 600 }
+      })
+    }
+  );
   if(!res.ok){
-    throw new Error(`Mistral API error ${res.status}: ${raw}`);
+    const errText = await res.text().catch(() => '');
+    throw new Error(`Gemini API error ${res.status}: ${errText}`);
   }
+  const data = await res.json();
+  return (data.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
+}
 
-  let data;
-  try{
-    data = JSON.parse(raw);
-  }catch(e){
-    throw new Error(`Mistral returned invalid JSON: ${raw}`);
-  }
-
-  const replyText = data?.choices?.[0]?.message?.content;
-  if(!replyText) throw new Error(`No text generated from Mistral: ${raw}`);
-  return replyText.trim();
-}ion init(){
+async function init(){
   detectedRegion = detectRegion();
   populateLangSelect();
   applyLanguage();
   showTyping();
   try{
-    const initialUserMsg = {
-      role: 'user',
-      content: 'Start session'
-    };
     const text = await callBackend(
       buildSystemPrompt() + "\n\nOpen the conversation now: greet the person briefly and ask one open question about where they are in their career right now.",
-      [initialUserMsg]
+      []
     );
     hideTyping();
     addMessage('ai', text);
-    history.push(initialUserMsg);
     history.push({role:'assistant', content: text});
-    backendReady = true;
+    sendBtn.disabled = false;
   }catch(e){
     hideTyping();
     backendReady = false;
-    const msg = (e && e.message === 'No Mistral API key set')
-      ? "This page needs a Mistral API key. Open the file and paste your key into MISTRAL_API_KEY near the top of the <script> tag."
+    const msg = (e && e.message === 'No API key set')
+      ? "This page needs a Gemini API key. Open the file and paste your key into GEMINI_API_KEY near the top of the <script> tag."
       : "I can't connect to the counseling AI right now. You can still use \u201cAsk an Expert\u201d above to talk to a real person.";
     addMessage('ai', msg);
-  }finally{
-    updateSendButtonState();
   }
 }
 
 async function sendMessage(){
   const text = input.value.trim();
   if(!text || !backendReady) return;
-  
   addMessage('user', text);
   history.push({role:'user', content: text});
-  
   input.value = '';
   input.style.height = 'auto';
   sendBtn.disabled = true;
-  input.disabled = true;
   showTyping();
-  
   try{
     const reply = await callBackend(buildSystemPrompt(), history);
     hideTyping();
@@ -439,13 +400,9 @@ async function sendMessage(){
     history.push({role:'assistant', content: reply});
   }catch(e){
     hideTyping();
-    history.pop();
     addMessage('ai', "Sorry, something went wrong sending that. Could you try again?");
-  }finally{
-    input.disabled = false;
-    updateSendButtonState();
-    input.focus();
   }
+  sendBtn.disabled = false;
 }
 
 sendBtn.addEventListener('click', sendMessage);
@@ -455,18 +412,14 @@ input.addEventListener('keydown', (e) => {
     if(!sendBtn.disabled) sendMessage();
   }
 });
-
 input.addEventListener('input', () => {
   input.style.height = 'auto';
   input.style.height = Math.min(input.scrollHeight, 120) + 'px';
-  updateSendButtonState();
 });
 
 document.getElementById('askExpertBtn').addEventListener('click', () => overlay.classList.add('open'));
 document.getElementById('closeModal').addEventListener('click', () => overlay.classList.remove('open'));
 overlay.addEventListener('click', (e) => { if(e.target === overlay) overlay.classList.remove('open'); });
-window.addEventListener('keydown', (e) => { if(e.key === 'Escape') overlay.classList.remove('open'); });
-
 document.getElementById('meetChoice').addEventListener('click', () => window.open(MEET_LINK, '_blank'));
 document.getElementById('zoomChoice').addEventListener('click', () => window.open(ZOOM_LINK, '_blank'));
 
