@@ -357,16 +357,22 @@ async function callBackend(systemPrompt, msgHistory){
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
   
   const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-goog-api-key': GEMINI_API_KEY
+  },
+  body: JSON.stringify({
+    contents,
+    systemInstruction: {
+      parts: [{ text: systemPrompt }]
     },
-    body: JSON.stringify({
-      contents,
-      systemInstruction: { parts: [{ text: systemPrompt }] },
-      generationConfig: { temperature: 0.7, maxOutputTokens: 600 }
-    })
-  });
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 600
+    }
+  })
+});
   
   if(!res.ok){
     const errText = await res.text().catch(() => '');
