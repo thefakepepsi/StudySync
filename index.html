@@ -173,7 +173,6 @@ const sendBtn = document.getElementById('sendBtn');
 const overlay = document.getElementById('overlay');
 
 let history = [];
-let sample = null;
 let currentLang = 'en';
 let detectedRegion = null;
 
@@ -272,17 +271,16 @@ function populateLangSelect(){
   sel.addEventListener('change', async () => {
     currentLang = sel.value;
     applyLanguage();
-    if(sample && history.length){
+    if(backendReady && history.length){
       showTyping();
       try{
-        const res = await sample(
-          [{role:'user', content: buildSystemPrompt()}, ...history,
-           {role:'user', content:`(The user just switched the interface language to ${LANGS[currentLang].name}. Briefly acknowledge in ${LANGS[currentLang].name} and continue the conversation naturally from where it left off.)`}],
-          {modelTier:'default', cache:false}
-        );
+        const text = await callBackend(buildSystemPrompt(), [
+          ...history,
+          {role:'user', content:`(The user just switched the interface language to ${LANGS[currentLang].name}. Briefly acknowledge in ${LANGS[currentLang].name} and continue the conversation naturally from where it left off.)`}
+        ]);
         hideTyping();
-        addMessage('ai', res.text.trim());
-        history.push({role:'assistant', content: res.text.trim()});
+        addMessage('ai', text);
+        history.push({role:'assistant', content: text});
       }catch(e){ hideTyping(); }
     }
   });
@@ -326,34 +324,72 @@ function hideTyping(){
   if(el) el.remove();
 }
 
+// ---- Groq config ----
+// Paste your own Groq API key below. Get one free at console.groq.com
+// WARNING: this key is visible to anyone who views this page's source or
+// opens DevTools. Only do this if you've accepted that risk (see the chat
+// where this was discussed). Rotate the key immediately if it ever leaks
+// or gets abused.
+const GROQ_API_KEY = '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';
+const GROQ_MODEL = 'llama-3.3-70b-versatile';
+let backendReady = true;
+
+async function callBackend(systemPrompt, msgHistory){
+  if(GROQ_API_KEY === 'PASTE_YOUR_GROQ_API_KEY_HERE'){
+    throw new Error('No API key set');
+  }
+  const groqMessages = [
+    { role: 'system', content: systemPrompt },
+    ...msgHistory.map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content }))
+  ];
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${GROQ_API_KEY}`
+    },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages: groqMessages,
+      temperature: 0.7,
+      max_tokens: 600
+    })
+  });
+  if(!res.ok){
+    const errText = await res.text().catch(() => '');
+    throw new Error(`Groq API error ${res.status}: ${errText}`);
+  }
+  const data = await res.json();
+  return (data.choices?.[0]?.message?.content || '').trim();
+}
+
 async function init(){
   detectedRegion = detectRegion();
   populateLangSelect();
   applyLanguage();
-  sample = await claude.use("sample");
-  if(!sample){
-    addMessage('ai', "I can't connect to the counseling AI right now. You can still use \u201cAsk an Expert\u201d above to talk to a real person.");
-    return;
-  }
   showTyping();
   try{
-    const res = await sample(
-      [{role:'user', content: buildSystemPrompt() + "\n\nOpen the conversation now: greet the person briefly and ask one open question about where they are in their career right now."}],
-      {modelTier:'default', cache:false}
+    const text = await callBackend(
+      buildSystemPrompt() + "\n\nOpen the conversation now: greet the person briefly and ask one open question about where they are in their career right now.",
+      []
     );
     hideTyping();
-    addMessage('ai', res.text.trim());
-    history.push({role:'assistant', content: res.text.trim()});
+    addMessage('ai', text);
+    history.push({role:'assistant', content: text});
     sendBtn.disabled = false;
   }catch(e){
     hideTyping();
-    addMessage('ai', "I'm having trouble starting up. Feel free to try again, or use \u201cAsk an Expert\u201d to talk to a person.");
+    backendReady = false;
+    const msg = (e && e.message === 'No API key set')
+      ? "This page needs a Groq API key. Open the file and paste your key into GROQ_API_KEY near the top of the <script> tag."
+      : "I can't connect to the counseling AI right now. You can still use \u201cAsk an Expert\u201d above to talk to a real person.";
+    addMessage('ai', msg);
   }
 }
 
 async function sendMessage(){
   const text = input.value.trim();
-  if(!text || !sample) return;
+  if(!text || !backendReady) return;
   addMessage('user', text);
   history.push({role:'user', content: text});
   input.value = '';
@@ -361,13 +397,10 @@ async function sendMessage(){
   sendBtn.disabled = true;
   showTyping();
   try{
-    const res = await sample(
-      [{role:'user', content: buildSystemPrompt()}, ...history],
-      {modelTier:'default', cache:false}
-    );
+    const reply = await callBackend(buildSystemPrompt(), history);
     hideTyping();
-    addMessage('ai', res.text.trim());
-    history.push({role:'assistant', content: res.text.trim()});
+    addMessage('ai', reply);
+    history.push({role:'assistant', content: reply});
   }catch(e){
     hideTyping();
     addMessage('ai', "Sorry, something went wrong sending that. Could you try again?");
