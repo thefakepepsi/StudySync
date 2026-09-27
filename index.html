@@ -273,15 +273,21 @@ function populateLangSelect(){
     applyLanguage();
     if(backendReady && history.length){
       showTyping();
+      sendBtn.disabled = true;
+      input.disabled = true;
+      const langUserMsg = {
+        role: 'user',
+        content: `(The user just switched the interface language to ${LANGS[currentLang].name}. Briefly acknowledge in ${LANGS[currentLang].name} and continue the conversation naturally from where it left off.)`
+      };
       try{
-        const text = await callBackend(buildSystemPrompt(), [
-          ...history,
-          {role:'user', content:`(The user just switched the interface language to ${LANGS[currentLang].name}. Briefly acknowledge in ${LANGS[currentLang].name} and continue the conversation naturally from where it left off.)`}
-        ]);
+        const text = await callBackend(buildSystemPrompt(), [...history, langUserMsg]);
         hideTyping();
         addMessage('ai', text);
+        history.push(langUserMsg);
         history.push({role:'assistant', content: text});
       }catch(e){ hideTyping(); }
+      sendBtn.disabled = false;
+      input.disabled = false;
     }
   });
 }
@@ -324,44 +330,41 @@ function hideTyping(){
   if(el) el.remove();
 }
 
-// ---- Gemini config ----
-// Get a free key at aistudio.google.com/apikey
-// WARNING: this key is visible to anyone who views this page's source or
-// opens DevTools. Only proceed if you've accepted that (see prior discussion).
-// Rotate the key at aistudio.google.com/apikey if it ever leaks or gets abused.
-const GEMINI_API_KEY = 'AQ.Ab8RN6J9I69OWWRN9iDwxy5tjOLVg_NTrRx_P2KLiiJGyDFDng'; // <-- replace only the text between quotes
-const GEMINI_MODEL = 'gemini-3.8-flash';
+const GEMINI_API_KEY = 'AQ.Ab8RN6LrPNWePq0mw_VeHGifx4YWtv-CC_KGXVPyfUHQYagfRA';
+const GEMINI_MODEL = 'gemini-1.5-flash';
 let backendReady = true;
 
 async function callBackend(systemPrompt, msgHistory){
-  if(!GEMINI_API_KEY || GEMINI_API_KEY.indexOf('PASTE_YOUR') === 0){
+  if(!GEMINI_API_KEY || GEMINI_API_KEY === 'PASTE_YOUR_GEMINI_API_KEY_HERE'){
     throw new Error('No API key set');
   }
   const contents = msgHistory.map(m => ({
     role: m.role === 'assistant' ? 'model' : 'user',
     parts: [{ text: m.content }]
   }));
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': GEMINI_API_KEY
-      },
-      body: JSON.stringify({
-        contents,
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-        generationConfig: { temperature: 0.7, maxOutputTokens: 600 }
-      })
-    }
-  );
+  
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
+  
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      contents,
+      systemInstruction: { parts: [{ text: systemPrompt }] },
+      generationConfig: { temperature: 0.7, maxOutputTokens: 600 }
+    })
+  });
+  
   if(!res.ok){
     const errText = await res.text().catch(() => '');
     throw new Error(`Gemini API error ${res.status}: ${errText}`);
   }
   const data = await res.json();
-  return (data.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
+  const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if(!replyText) throw new Error('No text generated from model');
+  return replyText.trim();
 }
 
 async function init(){
@@ -370,12 +373,17 @@ async function init(){
   applyLanguage();
   showTyping();
   try{
+    const initialUserMsg = {
+      role: 'user',
+      content: 'Start session'
+    };
     const text = await callBackend(
       buildSystemPrompt() + "\n\nOpen the conversation now: greet the person briefly and ask one open question about where they are in their career right now.",
-      []
+      [initialUserMsg]
     );
     hideTyping();
     addMessage('ai', text);
+    history.push(initialUserMsg);
     history.push({role:'assistant', content: text});
     sendBtn.disabled = false;
   }catch(e){
@@ -391,12 +399,16 @@ async function init(){
 async function sendMessage(){
   const text = input.value.trim();
   if(!text || !backendReady) return;
+  
   addMessage('user', text);
   history.push({role:'user', content: text});
+  
   input.value = '';
   input.style.height = 'auto';
   sendBtn.disabled = true;
+  input.disabled = true;
   showTyping();
+  
   try{
     const reply = await callBackend(buildSystemPrompt(), history);
     hideTyping();
@@ -404,9 +416,12 @@ async function sendMessage(){
     history.push({role:'assistant', content: reply});
   }catch(e){
     hideTyping();
+    history.pop(); // Revert pending user turn on failure to keep history valid
     addMessage('ai', "Sorry, something went wrong sending that. Could you try again?");
   }
   sendBtn.disabled = false;
+  input.disabled = false;
+  input.focus();
 }
 
 sendBtn.addEventListener('click', sendMessage);
@@ -424,6 +439,8 @@ input.addEventListener('input', () => {
 document.getElementById('askExpertBtn').addEventListener('click', () => overlay.classList.add('open'));
 document.getElementById('closeModal').addEventListener('click', () => overlay.classList.remove('open'));
 overlay.addEventListener('click', (e) => { if(e.target === overlay) overlay.classList.remove('open'); });
+window.addEventListener('keydown', (e) => { if(e.key === 'Escape') overlay.classList.remove('open'); });
+
 document.getElementById('meetChoice').addEventListener('click', () => window.open(MEET_LINK, '_blank'));
 document.getElementById('zoomChoice').addEventListener('click', () => window.open(ZOOM_LINK, '_blank'));
 
