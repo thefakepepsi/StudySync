@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Waypoint — Career Counseling</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#142019; --panel:#1D2C22; --panel-2:#233527;
+    --paper:#F0EAD9; --text:#ECE6D6; --text-dim:#AEB8A9;
+    --brass:#C68A3E; --brass-dim:#9C6C2E; --clay:#8B5E3C;
+    --line: rgba(236,230,214,0.14);
+    box-sizing:border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --ink:#142019; --panel:#1D2C22; --text:#ECE6D6;
+    }
+  }
+  *{box-sizing:border-box;}
+  html{scroll-padding-top:env(safe-area-inset-top,0px); height:100%;}
+  body{
+    margin:0; height:100%; background:var(--ink); color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif; display:flex; flex-direction:column;
+  }
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 18px 28px; padding-top: calc(18px + env(safe-area-inset-top,0px));
+    border-bottom:1px solid var(--line); flex-shrink:0;
+  }
+  .wordmark{
+    font-family:'Fraunces', serif; font-size:1.4rem; font-weight:600; letter-spacing:0.01em;
+  }
+  .wordmark span{color:var(--brass); font-style:italic; font-weight:500;}
+  .expert-btn{
+    background:transparent; border:1px solid var(--brass-dim); color:var(--paper);
+    padding:9px 18px; border-radius:100px; font-family:inherit; font-size:0.88rem;
+    cursor:pointer; transition:background .15s, border-color .15s;
+  }
+  .expert-btn:hover{background:rgba(198,138,62,0.14); border-color:var(--brass);}
+  .expert-btn:focus-visible, button:focus-visible{outline:2px solid var(--brass); outline-offset:2px;}
+  .header-right{display:flex; align-items:center; gap:12px;}
+  .lang-select{
+    background:var(--panel-2); color:var(--text); border:1px solid var(--line);
+    border-radius:100px; padding:8px 14px; font-family:inherit; font-size:0.85rem; cursor:pointer;
+  }
+  .lang-select:focus-visible{outline:2px solid var(--brass); outline-offset:2px;}
+  .locbar{
+    display:flex; align-items:center; gap:6px; justify-content:center;
+    font-size:0.78rem; color:var(--text-dim); padding:8px 20px; border-bottom:1px solid var(--line);
+  }
+  .loc-change{background:none; border:none; color:var(--brass); font-family:inherit; font-size:0.78rem; cursor:pointer; padding:0;}
+  .loc-change:hover{text-decoration:underline;}
+
+  main{flex:1; display:flex; justify-content:center; overflow:hidden; min-height:0;}
+  .chat-wrap{
+    width:100%; max-width:760px; display:flex; flex-direction:column; min-height:0;
+    padding:0 20px;
+  }
+  .messages{
+    flex:1; overflow-y:auto; padding:28px 4px 12px; display:flex; flex-direction:column; gap:18px;
+  }
+  .msg{max-width:82%; line-height:1.55; font-size:0.98rem;}
+  .msg.ai{
+    align-self:flex-start; background:var(--panel-2); border:1px solid var(--line);
+    padding:14px 18px; border-radius:4px 14px 14px 14px; color:var(--text);
+  }
+  .msg.user{
+    align-self:flex-end; background:var(--paper); color:#26301F;
+    padding:14px 18px; border-radius:14px 4px 14px 14px;
+  }
+  .msg.ai .label{display:block; font-size:0.72rem; letter-spacing:0.03em; color:var(--brass); margin-bottom:5px; font-weight:500;}
+  .typing{align-self:flex-start; color:var(--text-dim); font-size:0.88rem; padding:0 18px;}
+  .typing .dots span{
+    display:inline-block; width:5px; height:5px; margin-right:3px; border-radius:50%;
+    background:var(--brass); animation:blink 1.2s infinite;
+  }
+  .typing .dots span:nth-child(2){animation-delay:.2s;}
+  .typing .dots span:nth-child(3){animation-delay:.4s;}
+  @keyframes blink{0%,80%,100%{opacity:.25;}40%{opacity:1;}}
+
+  .composer{
+    display:flex; gap:10px; padding:16px 4px 20px; border-top:1px solid var(--line);
+  }
+  .composer textarea{
+    flex:1; resize:none; background:var(--panel); border:1px solid var(--line); color:var(--text);
+    border-radius:12px; padding:12px 14px; font-family:inherit; font-size:0.95rem; line-height:1.4;
+    max-height:120px;
+  }
+  .composer textarea:focus-visible{outline:2px solid var(--brass); outline-offset:1px;}
+  .send-btn{
+    background:var(--brass); border:none; color:#1A140A; font-weight:600; padding:0 22px;
+    border-radius:12px; cursor:pointer; font-family:inherit; font-size:0.92rem;
+  }
+  .send-btn:disabled{opacity:0.5; cursor:default;}
+  .send-btn:hover:not(:disabled){background:#D89B4F;}
+
+  .overlay{
+    position:fixed; inset:0; background:rgba(10,14,10,0.7); display:flex; align-items:center; justify-content:center;
+    padding:20px; z-index:10; opacity:0; pointer-events:none; transition:opacity .18s;
+  }
+  .overlay.open{opacity:1; pointer-events:auto;}
+  .modal{
+    background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:30px;
+    max-width:400px; width:100%;
+  }
+  .modal h2{font-family:'Fraunces', serif; font-weight:600; font-size:1.35rem; margin:0 0 8px;}
+  .modal p{color:var(--text-dim); font-size:0.92rem; line-height:1.5; margin:0 0 22px;}
+  .choice{
+    display:flex; align-items:center; gap:14px; width:100%; text-align:left;
+    background:var(--panel-2); border:1px solid var(--line); color:var(--text);
+    padding:14px 16px; border-radius:10px; cursor:pointer; font-family:inherit; font-size:0.95rem;
+    margin-bottom:10px; transition:border-color .15s;
+  }
+  .choice:hover{border-color:var(--brass-dim);}
+  .choice .dot{width:10px; height:10px; border-radius:50%; flex-shrink:0;}
+  .choice.meet .dot{background:#34A853;}
+  .choice.zoom .dot{background:#2D8CFF;}
+  .modal-close{
+    display:block; margin:14px auto 0; background:none; border:none; color:var(--text-dim);
+    font-family:inherit; font-size:0.85rem; cursor:pointer;
+  }
+  ::-webkit-scrollbar{width:8px;} ::-webkit-scrollbar-thumb{background:var(--line); border-radius:8px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wordmark">Waypoint<span>.</span></div>
+  <div class="header-right">
+    <select id="langSelect" class="lang-select" aria-label="Language"></select>
+    <button class="expert-btn" id="askExpertBtn">Ask an Expert</button>
+  </div>
+</header>
+<div class="locbar" id="locBar" hidden>
+  <span id="locText"></span> · <button id="locChange" class="loc-change"></button>
+</div>
+
+<main>
+  <div class="chat-wrap">
+    <div class="messages" id="messages"></div>
+    <div class="composer">
+      <textarea id="input" rows="1" placeholder="Tell me what's on your mind…" aria-label="Message"></textarea>
+      <button class="send-btn" id="sendBtn" disabled>Send</button>
+    </div>
+  </div>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2>Talk to a person</h2>
+    <p>Connect live with a human career counselor. Choose where you'd like to meet.</p>
+    <button class="choice meet" id="meetChoice"><span class="dot"></span> Google Meet</button>
+    <button class="choice zoom" id="zoomChoice"><span class="dot"></span> Zoom</button>
+    <button class="modal-close" id="closeModal">Not now</button>
+  </div>
+</div>
+
+<script>
+// ---- Configure your real meeting links here ----
+const MEET_LINK = "https://meet.google.com/your-meeting-code";
+const ZOOM_LINK = "https://zoom.us/j/your-meeting-id";
+// --------------------------------------------------
+
+const messagesEl = document.getElementById('messages');
+const input = document.getElementById('input');
+const sendBtn = document.getElementById('sendBtn');
+const overlay = document.getElementById('overlay');
+
+let history = [];
+let sample = null;
+let currentLang = 'en';
+let detectedRegion = null;
+
+const LANGS = {
+  en:{name:'English', native:'English', rtl:false, askExpert:'Ask an Expert', placeholder:"Tell me what's on your mind…", send:'Send', modalTitle:'Talk to a person', modalDesc:"Connect live with a human career counselor. Choose where you'd like to meet.", meet:'Google Meet', zoom:'Zoom', notNow:'Not now', localizedFor:'Localized for', change:'change'},
+  hi:{name:'Hindi', native:'हिन्दी', rtl:false, askExpert:'विशेषज्ञ से पूछें', placeholder:'आपके मन में क्या है, बताइए…', send:'भेजें', modalTitle:'किसी व्यक्ति से बात करें', modalDesc:'किसी मानव करियर काउंसलर से लाइव जुड़ें। आप कहाँ मिलना चाहेंगे चुनें।', meet:'गूगल मीट', zoom:'ज़ूम', notNow:'अभी नहीं', localizedFor:'इसके लिए स्थानीयकृत', change:'बदलें'},
+  ar:{name:'Arabic', native:'العربية', rtl:true, askExpert:'اسأل خبيرًا', placeholder:'أخبرني بما يدور في ذهنك…', send:'إرسال', modalTitle:'تحدث مع شخص', modalDesc:'تواصل مباشرة مع مستشار مهني بشري. اختر مكان اللقاء.', meet:'غوغل ميت', zoom:'زوم', notNow:'ليس الآن', localizedFor:'مخصص لـ', change:'تغيير'},
+  zh:{name:'Chinese', native:'中文', rtl:false, askExpert:'咨询专家', placeholder:'说说你现在的想法…', send:'发送', modalTitle:'与真人对话', modalDesc:'与真人职业顾问实时连线。请选择您想使用的会议方式。', meet:'Google Meet', zoom:'Zoom', notNow:'暂不需要', localizedFor:'已为以下地区定制', change:'更改'},
+  ru:{name:'Russian', native:'Русский', rtl:false, askExpert:'Спросить эксперта', placeholder:'Расскажите, что у вас на уме…', send:'Отправить', modalTitle:'Поговорить с человеком', modalDesc:'Свяжитесь напрямую с карьерным консультантом. Выберите способ встречи.', meet:'Google Meet', zoom:'Zoom', notNow:'Не сейчас', localizedFor:'Локализовано для', change:'изменить'},
+  fr:{name:'French', native:'Français', rtl:false, askExpert:'Demander à un expert', placeholder:'Dites-moi ce qui vous préoccupe…', send:'Envoyer', modalTitle:"Parler à une personne", modalDesc:"Échangez en direct avec un conseiller d'orientation. Choisissez votre mode de rendez-vous.", meet:'Google Meet', zoom:'Zoom', notNow:'Pas maintenant', localizedFor:'Localisé pour', change:'modifier'},
+  ur:{name:'Urdu', native:'اردو', rtl:true, askExpert:'ماہر سے پوچھیں', placeholder:'بتائیں آپ کے ذہن میں کیا ہے…', send:'بھیجیں', modalTitle:'کسی شخص سے بات کریں', modalDesc:'براہ راست ایک انسانی کیریئر مشیر سے جڑیں۔ ملاقات کا طریقہ منتخب کریں۔', meet:'گوگل میٹ', zoom:'زوم', notNow:'ابھی نہیں', localizedFor:'کے لیے مقامی بنایا گیا', change:'تبدیل کریں'},
+  ta:{name:'Tamil', native:'தமிழ்', rtl:false, askExpert:'நிபுணரிடம் கேளுங்கள்', placeholder:'உங்கள் மனதில் இருப்பதைச் சொல்லுங்கள்…', send:'அனுப்பு', modalTitle:'ஒரு நபருடன் பேசுங்கள்', modalDesc:'நேரடியாக ஒரு மனித தொழில் ஆலோசகருடன் இணையுங்கள். சந்திக்க விரும்பும் இடத்தைத் தேர்ந்தெடுக்கவும்.', meet:'கூகிள் மீட்', zoom:'ஜூம்', notNow:'இப்போது வேண்டாம்', localizedFor:'இதற்காக உள்ளூர்மயமாக்கப்பட்டது', change:'மாற்று'}
+};
+
+const TZ_COUNTRY = {
+  'Asia/Kolkata':'India','Asia/Calcutta':'India','Asia/Karachi':'Pakistan','Asia/Dubai':'the United Arab Emirates',
+  'Asia/Riyadh':'Saudi Arabia','Asia/Qatar':'Qatar','Asia/Kuwait':'Kuwait','Asia/Bahrain':'Bahrain','Asia/Muscat':'Oman',
+  'Asia/Shanghai':'China','Asia/Chongqing':'China','Asia/Hong_Kong':'Hong Kong','Asia/Taipei':'Taiwan',
+  'Asia/Colombo':'Sri Lanka','Asia/Singapore':'Singapore','Asia/Dhaka':'Bangladesh','Asia/Kathmandu':'Nepal',
+  'Asia/Tokyo':'Japan','Asia/Seoul':'South Korea','Asia/Jakarta':'Indonesia','Asia/Bangkok':'Thailand',
+  'Asia/Manila':'the Philippines','Asia/Kuala_Lumpur':'Malaysia','Asia/Istanbul':'Turkey','Asia/Tehran':'Iran',
+  'Asia/Baghdad':'Iraq','Asia/Amman':'Jordan','Asia/Beirut':'Lebanon',
+  'Europe/Moscow':'Russia','Europe/Kaliningrad':'Russia','Asia/Yekaterinburg':'Russia',
+  'Europe/Paris':'France','Europe/London':'the United Kingdom','Europe/Berlin':'Germany','Europe/Madrid':'Spain',
+  'Europe/Rome':'Italy','Europe/Amsterdam':'the Netherlands','Europe/Brussels':'Belgium','Europe/Zurich':'Switzerland',
+  'Europe/Vienna':'Austria','Europe/Warsaw':'Poland','Europe/Stockholm':'Sweden','Europe/Dublin':'Ireland','Europe/Lisbon':'Portugal',
+  'Africa/Cairo':'Egypt','Africa/Casablanca':'Morocco','Africa/Lagos':'Nigeria','Africa/Johannesburg':'South Africa','Africa/Nairobi':'Kenya',
+  'America/New_York':'the United States','America/Chicago':'the United States','America/Denver':'the United States',
+  'America/Los_Angeles':'the United States','America/Toronto':'Canada','America/Vancouver':'Canada',
+  'Australia/Sydney':'Australia','Australia/Melbourne':'Australia','Pacific/Auckland':'New Zealand',
+  'America/Sao_Paulo':'Brazil','America/Mexico_City':'Mexico','America/Bogota':'Colombia'
+};
+
+function detectRegion(){
+  try{
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if(TZ_COUNTRY[tz]) return TZ_COUNTRY[tz];
+    const locale = navigator.language || 'en-US';
+    const region = new Intl.Locale(locale).maximize().region;
+    if(region){
+      const dn = new Intl.DisplayNames(['en'], {type:'region'});
+      const name = dn.of(region);
+      if(name) return name;
+    }
+  }catch(e){}
+  return null;
+}
+
+function applyLanguage(){
+  const L = LANGS[currentLang];
+  document.documentElement.setAttribute('dir', L.rtl ? 'rtl' : 'ltr');
+  document.getElementById('askExpertBtn').textContent = L.askExpert;
+  input.placeholder = L.placeholder;
+  sendBtn.textContent = L.send;
+  document.querySelector('.modal h2').textContent = L.modalTitle;
+  document.querySelector('.modal p').textContent = L.modalDesc;
+  document.querySelector('.choice.meet').lastChild.textContent = ' ' + L.meet;
+  document.querySelector('.choice.zoom').lastChild.textContent = ' ' + L.zoom;
+  document.getElementById('closeModal').textContent = L.notNow;
+  document.getElementById('locChange').textContent = L.change;
+  updateLocBar();
+}
+
+function updateLocBar(){
+  const L = LANGS[currentLang];
+  const bar = document.getElementById('locBar');
+  if(!detectedRegion){ bar.hidden = true; return; }
+  bar.hidden = false;
+  document.getElementById('locText').textContent = L.localizedFor + ' ' + detectedRegion;
+}
+
+function buildSystemPrompt(){
+  const L = LANGS[currentLang];
+  let p = `You are Waypoint, a warm, sharp career counselor speaking with someone in a chat.
+Be concise (2-5 sentences per turn, occasionally a short list), conversational, and curious.
+Ask one focused follow-up question at a time rather than interrogating.
+Help the person get clarity on career direction, job search strategy, career changes, skills, or workplace concerns.
+Never repeat their message back to them. Never use headers or markdown formatting, just plain conversational text.
+Respond only in ${L.name}, written naturally as a native speaker would.`;
+  if(detectedRegion){
+    p += `\nThe user appears to be located in ${detectedRegion} (auto-detected from their device, so it may be imprecise). Where relevant, tailor examples — job market conditions, common job platforms, typical hiring practices, work-permit or visa considerations, and salary context — to that location, and confirm with them if it seems important rather than assuming.`;
+  }
+  return p;
+}
+
+function populateLangSelect(){
+  const sel = document.getElementById('langSelect');
+  sel.innerHTML = '';
+  Object.keys(LANGS).forEach(code => {
+    const opt = document.createElement('option');
+    opt.value = code;
+    opt.textContent = LANGS[code].native;
+    sel.appendChild(opt);
+  });
+  sel.value = currentLang;
+  sel.addEventListener('change', async () => {
+    currentLang = sel.value;
+    applyLanguage();
+    if(sample && history.length){
+      showTyping();
+      try{
+        const res = await sample(
+          [{role:'user', content: buildSystemPrompt()}, ...history,
+           {role:'user', content:`(The user just switched the interface language to ${LANGS[currentLang].name}. Briefly acknowledge in ${LANGS[currentLang].name} and continue the conversation naturally from where it left off.)`}],
+          {modelTier:'default', cache:false}
+        );
+        hideTyping();
+        addMessage('ai', res.text.trim());
+        history.push({role:'assistant', content: res.text.trim()});
+      }catch(e){ hideTyping(); }
+    }
+  });
+}
+
+document.getElementById('locChange').addEventListener('click', () => {
+  const val = window.prompt(LANGS[currentLang].localizedFor + '?', detectedRegion || '');
+  if(val !== null){
+    detectedRegion = val.trim() || null;
+    updateLocBar();
+  }
+});
+
+function addMessage(role, text){
+  const div = document.createElement('div');
+  div.className = 'msg ' + (role === 'user' ? 'user' : 'ai');
+  if(role !== 'user'){
+    const label = document.createElement('span');
+    label.className = 'label';
+    label.textContent = 'Waypoint';
+    div.appendChild(label);
+  }
+  const body = document.createElement('span');
+  body.textContent = text;
+  div.appendChild(body);
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  return body;
+}
+
+function showTyping(){
+  const div = document.createElement('div');
+  div.className = 'typing';
+  div.id = 'typingIndicator';
+  div.innerHTML = '<span class="dots"><span></span><span></span><span></span></span>';
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+function hideTyping(){
+  const el = document.getElementById('typingIndicator');
+  if(el) el.remove();
+}
+
+async function init(){
+  detectedRegion = detectRegion();
+  populateLangSelect();
+  applyLanguage();
+  sample = await claude.use("sample");
+  if(!sample){
+    addMessage('ai', "I can't connect to the counseling AI right now. You can still use \u201cAsk an Expert\u201d above to talk to a real person.");
+    return;
+  }
+  showTyping();
+  try{
+    const res = await sample(
+      [{role:'user', content: buildSystemPrompt() + "\n\nOpen the conversation now: greet the person briefly and ask one open question about where they are in their career right now."}],
+      {modelTier:'default', cache:false}
+    );
+    hideTyping();
+    addMessage('ai', res.text.trim());
+    history.push({role:'assistant', content: res.text.trim()});
+    sendBtn.disabled = false;
+  }catch(e){
+    hideTyping();
+    addMessage('ai', "I'm having trouble starting up. Feel free to try again, or use \u201cAsk an Expert\u201d to talk to a person.");
+  }
+}
+
+async function sendMessage(){
+  const text = input.value.trim();
+  if(!text || !sample) return;
+  addMessage('user', text);
+  history.push({role:'user', content: text});
+  input.value = '';
+  input.style.height = 'auto';
+  sendBtn.disabled = true;
+  showTyping();
+  try{
+    const res = await sample(
+      [{role:'user', content: buildSystemPrompt()}, ...history],
+      {modelTier:'default', cache:false}
+    );
+    hideTyping();
+    addMessage('ai', res.text.trim());
+    history.push({role:'assistant', content: res.text.trim()});
+  }catch(e){
+    hideTyping();
+    addMessage('ai', "Sorry, something went wrong sending that. Could you try again?");
+  }
+  sendBtn.disabled = false;
+}
+
+sendBtn.addEventListener('click', sendMessage);
+input.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter' && !e.shiftKey){
+    e.preventDefault();
+    if(!sendBtn.disabled) sendMessage();
+  }
+});
+input.addEventListener('input', () => {
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+});
+
+document.getElementById('askExpertBtn').addEventListener('click', () => overlay.classList.add('open'));
+document.getElementById('closeModal').addEventListener('click', () => overlay.classList.remove('open'));
+overlay.addEventListener('click', (e) => { if(e.target === overlay) overlay.classList.remove('open'); });
+document.getElementById('meetChoice').addEventListener('click', () => window.open(MEET_LINK, '_blank'));
+document.getElementById('zoomChoice').addEventListener('click', () => window.open(ZOOM_LINK, '_blank'));
+
+init();
+</script>
+</body>
+</html>
