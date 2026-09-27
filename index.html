@@ -166,9 +166,10 @@
 const MEET_LINK = "https://meet.google.com/your-meeting-code";
 const ZOOM_LINK = "https://zoom.us/j/your-meeting-id";
 
-// Paste your Google AI Studio API key here
-const GEMINI_API_KEY = "AQ.Ab8RN6KJc41jRQWDqdMbQex-8ymsJ52Wca6NgC2MWswcM_0TNQ";
-const GEMINI_MODEL = "gemini-2.5-flash"; // Standard Gemini Flash model identifier
+// Paste your Mistral API key here
+// IMPORTANT: Do not publish a real API key in a public website.
+const MISTRAL_API_KEY = "mstrl_RYls2VAWzPIlPuOke4smtXUtcII1Ifqy_1xfeQH";
+const MISTRAL_MODEL = "mistral-small-latest";
 // -----------------------
 
 const messagesEl = document.getElementById('messages');
@@ -344,49 +345,50 @@ function hideTyping(){
   if(el) el.remove();
 }
 
-async function callBackend(systemPrompt, msgHistory){
-  if(!res.ok){
-  const errText = await res.text().catch(() => '');
-  console.error("GEMINI ERROR:", res.status, errText);
-  throw new Error(`Gemini API error ${res.status}: ${errText}`);
-}
-  
-  const contents = msgHistory.map(m => ({
-    role: m.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: m.content }]
-  }));
-  
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
-  
-  const res = await fetch(url, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'x-goog-api-key': GEMINI_API_KEY
-  },
-  body: JSON.stringify({
-    contents,
-    systemInstruction: {
-      parts: [{ text: systemPrompt }]
-    },
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: 600
-    }
-  })
-});
-  
-  if(!res.ok){
-    const errText = await res.text().catch(() => '');
-    throw new Error(`Gemini API error ${res.status}: ${errText}`);
+async functioasync function callBackend(systemPrompt, msgHistory){
+  if(!MISTRAL_API_KEY || MISTRAL_API_KEY === 'YOUR_MISTRAL_API_KEY'){
+    throw new Error('No Mistral API key set');
   }
-  const data = await res.json();
-  const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if(!replyText) throw new Error('No text generated from model');
-  return replyText.trim();
-}
 
-async function init(){
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    ...msgHistory.map(m => ({
+      role: m.role === 'assistant' ? 'assistant' : 'user',
+      content: m.content
+    }))
+  ];
+
+  const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${MISTRAL_API_KEY}`
+    },
+    body: JSON.stringify({
+      model: MISTRAL_MODEL,
+      messages,
+      temperature: 0.7,
+      max_tokens: 600
+    })
+  });
+
+  const raw = await res.text().catch(() => '');
+
+  if(!res.ok){
+    throw new Error(`Mistral API error ${res.status}: ${raw}`);
+  }
+
+  let data;
+  try{
+    data = JSON.parse(raw);
+  }catch(e){
+    throw new Error(`Mistral returned invalid JSON: ${raw}`);
+  }
+
+  const replyText = data?.choices?.[0]?.message?.content;
+  if(!replyText) throw new Error(`No text generated from Mistral: ${raw}`);
+  return replyText.trim();
+}ion init(){
   detectedRegion = detectRegion();
   populateLangSelect();
   applyLanguage();
@@ -408,8 +410,8 @@ async function init(){
   }catch(e){
     hideTyping();
     backendReady = false;
-    const msg = (e && e.message === 'No API key set')
-      ? "This page needs a Gemini API key. Open the file and paste your key into GEMINI_API_KEY near the top of the <script> tag."
+    const msg = (e && e.message === 'No Mistral API key set')
+      ? "This page needs a Mistral API key. Open the file and paste your key into MISTRAL_API_KEY near the top of the <script> tag."
       : "I can't connect to the counseling AI right now. You can still use \u201cAsk an Expert\u201d above to talk to a real person.";
     addMessage('ai', msg);
   }finally{
