@@ -345,9 +345,11 @@ function hideTyping(){
 }
 
 async function callBackend(systemPrompt, msgHistory){
-  if(!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY'){
-    throw new Error('No API key set');
-  }
+  if(!res.ok){
+  const errText = await res.text().catch(() => '');
+  console.error("GEMINI ERROR:", res.status, errText);
+  throw new Error(`Gemini API error ${res.status}: ${errText}`);
+}
   
   const contents = msgHistory.map(m => ({
     role: m.role === 'assistant' ? 'model' : 'user',
