@@ -155,17 +155,21 @@
   <div class="modal">
     <h2>Talk to a person</h2>
     <p>Connect live with a human career counselor. Choose where you'd like to meet.</p>
-    <button class="choice meet" id="meetChoice"><span class="dot"></span> Google Meet</button>
-    <button class="choice zoom" id="zoomChoice"><span class="dot"></span> Zoom</button>
+    <button class="choice meet" id="meetChoice"><span class="dot"></span><span id="meetLabel">Google Meet</span></button>
+    <button class="choice zoom" id="zoomChoice"><span class="dot"></span><span id="zoomLabel">Zoom</span></button>
     <button class="modal-close" id="closeModal">Not now</button>
   </div>
 </div>
 
 <script>
-// ---- Configure your real meeting links here ----
+// ---- Configuration ----
 const MEET_LINK = "https://meet.google.com/your-meeting-code";
 const ZOOM_LINK = "https://zoom.us/j/your-meeting-id";
-// --------------------------------------------------
+
+// Paste your Google AI Studio API key here
+const GEMINI_API_KEY = "AQ.Ab8RN6KvSCCAzhAViTCook3Dv-vnv9noAF6eSvEJ5ZAlCHbxOg";
+const GEMINI_MODEL = "gemini-2.5-flash"; // Standard Gemini Flash model identifier
+// -----------------------
 
 const messagesEl = document.getElementById('messages');
 const input = document.getElementById('input');
@@ -175,6 +179,7 @@ const overlay = document.getElementById('overlay');
 let history = [];
 let currentLang = 'en';
 let detectedRegion = null;
+let backendReady = true;
 
 const LANGS = {
   en:{name:'English', native:'English', rtl:false, askExpert:'Ask an Expert', placeholder:"Tell me what's on your mind…", send:'Send', modalTitle:'Talk to a person', modalDesc:"Connect live with a human career counselor. Choose where you'd like to meet.", meet:'Google Meet', zoom:'Zoom', notNow:'Not now', localizedFor:'Localized for', change:'change'},
@@ -221,6 +226,11 @@ function detectRegion(){
   return null;
 }
 
+function updateSendButtonState(){
+  const hasText = input.value.trim().length > 0;
+  sendBtn.disabled = !hasText || !backendReady;
+}
+
 function applyLanguage(){
   const L = LANGS[currentLang];
   document.documentElement.setAttribute('dir', L.rtl ? 'rtl' : 'ltr');
@@ -229,8 +239,8 @@ function applyLanguage(){
   sendBtn.textContent = L.send;
   document.querySelector('.modal h2').textContent = L.modalTitle;
   document.querySelector('.modal p').textContent = L.modalDesc;
-  document.querySelector('.choice.meet').lastChild.textContent = ' ' + L.meet;
-  document.querySelector('.choice.zoom').lastChild.textContent = ' ' + L.zoom;
+  document.getElementById('meetLabel').textContent = L.meet;
+  document.getElementById('zoomLabel').textContent = L.zoom;
   document.getElementById('closeModal').textContent = L.notNow;
   document.getElementById('locChange').textContent = L.change;
   updateLocBar();
@@ -285,9 +295,12 @@ function populateLangSelect(){
         addMessage('ai', text);
         history.push(langUserMsg);
         history.push({role:'assistant', content: text});
-      }catch(e){ hideTyping(); }
-      sendBtn.disabled = false;
-      input.disabled = false;
+      }catch(e){ 
+        hideTyping(); 
+      }finally{
+        input.disabled = false;
+        updateSendButtonState();
+      }
     }
   });
 }
@@ -325,19 +338,17 @@ function showTyping(){
   messagesEl.appendChild(div);
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
+
 function hideTyping(){
   const el = document.getElementById('typingIndicator');
   if(el) el.remove();
 }
 
-const GEMINI_API_KEY = 'AQ.Ab8RN6KvSCCAzhAViTCook3Dv-vnv9noAF6eSvEJ5ZAlCHbxOg';
-const GEMINI_MODEL = 'gemini-3.8-flash';
-let backendReady = true;
-
 async function callBackend(systemPrompt, msgHistory){
-  if(!GEMINI_API_KEY || GEMINI_API_KEY === 'PASTE_YOUR_GEMINI_API_KEY_HERE'){
+  if(!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY'){
     throw new Error('No API key set');
   }
+  
   const contents = msgHistory.map(m => ({
     role: m.role === 'assistant' ? 'model' : 'user',
     parts: [{ text: m.content }]
@@ -385,7 +396,7 @@ async function init(){
     addMessage('ai', text);
     history.push(initialUserMsg);
     history.push({role:'assistant', content: text});
-    sendBtn.disabled = false;
+    backendReady = true;
   }catch(e){
     hideTyping();
     backendReady = false;
@@ -393,6 +404,8 @@ async function init(){
       ? "This page needs a Gemini API key. Open the file and paste your key into GEMINI_API_KEY near the top of the <script> tag."
       : "I can't connect to the counseling AI right now. You can still use \u201cAsk an Expert\u201d above to talk to a real person.";
     addMessage('ai', msg);
+  }finally{
+    updateSendButtonState();
   }
 }
 
@@ -416,12 +429,13 @@ async function sendMessage(){
     history.push({role:'assistant', content: reply});
   }catch(e){
     hideTyping();
-    history.pop(); // Revert pending user turn on failure to keep history valid
+    history.pop();
     addMessage('ai', "Sorry, something went wrong sending that. Could you try again?");
+  }finally{
+    input.disabled = false;
+    updateSendButtonState();
+    input.focus();
   }
-  sendBtn.disabled = false;
-  input.disabled = false;
-  input.focus();
 }
 
 sendBtn.addEventListener('click', sendMessage);
@@ -431,9 +445,11 @@ input.addEventListener('keydown', (e) => {
     if(!sendBtn.disabled) sendMessage();
   }
 });
+
 input.addEventListener('input', () => {
   input.style.height = 'auto';
   input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+  updateSendButtonState();
 });
 
 document.getElementById('askExpertBtn').addEventListener('click', () => overlay.classList.add('open'));
