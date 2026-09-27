@@ -325,12 +325,12 @@ function hideTyping(){
 }
 
 
-const GEMINI_API_KEY = 'AQ.Ab8RN6LrPNWePq0mw_VeHGifx4YWtv-CC_KGXVPyfUHQYagfRA';
-const GEMINI_MODEL = 'gemini-flash-latest';
+const GEMINI_API_KEY = "AQ.Ab8RN6KLH_z0FxKSJy_5HE79PvhGquUju69I6w_Q0VpH2T38qA";
+const GEMINI_MODEL = 'gemini-2.5-flash';
 let backendReady = true;
 
 async function callBackend(systemPrompt, msgHistory){
-  if(GEMINI_API_KEY === 'AQ.Ab8RN6LrPNWePq0mw_VeHGifx4YWtv-CC_KGXVPyfUHQYagfRA'){
+  if(GEMINI_API_KEY === ''){
     throw new Error('No API key set');
   }
   const contents = msgHistory.map(m => ({
