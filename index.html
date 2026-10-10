@@ -1,0 +1,191 @@
+<title>StudySync</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:ital,wght@0,600;0,800;1,700;1,800&display=swap">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="views.css">
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#" data-view="home">StudySync<small>EduPulse</small></a>
+    <nav class="nav" id="mainNav" aria-label="StudySync" hidden>
+      <a href="#terminal" data-view="term" data-i18n="nav_terminal">Main AI Terminal</a>
+      <a href="#voice" data-view="voice" data-i18n="nav_voice">Voice Assistant</a>
+      <a href="#ledger" data-view="ledger" data-i18n="nav_ledger">Ledger</a>
+      <a href="#career" data-view="career" data-i18n="nav_career">Career Counselor</a>
+      <a href="#vr" data-view="vr" data-i18n="nav_vr">The VR Hub</a>
+    </nav>
+    <div class="actions">
+      <button class="to-en" id="toEnTop" type="button" hidden>Switch to English</button>
+      <button class="avatar" id="profileBtn" type="button" hidden data-i18n-aria="profile_h" aria-label="Profile">J</button>
+      <button class="icon-btn" id="settingsBtn" type="button" data-i18n-aria="settings" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01A1.7 1.7 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01A1.7 1.7 0 0 0 20.91 10H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="view" id="v-home">
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <h1 class="welcome" id="welcome" data-i18n="welcome">Welcome To StudySync.</h1>
+        <div class="hero-actions">
+          <button class="btn" id="loginBtn" type="button"><span class="g-mark" aria-hidden="true">G</span><span id="loginLabel" data-i18n="login">Login with Google</span></button>
+          <span class="hello" id="hello" hidden></span>
+          <button class="btn" id="openTermBtn" type="button" hidden data-i18n="open_terminal">Open the AI Terminal</button>
+        </div>
+        <div class="locale">
+          <span id="localeLabel"></span>
+          <button type="button" id="toEnBtn" hidden>Switch to English</button>
+        </div>
+      </div>
+      <button class="peek" id="peek" type="button" aria-label="Main AI Terminal">
+        <span class="tag" data-i18n="ex_label">Example</span>
+        <span class="you"><span class="who">you ›</span> <span data-i18n="ex_q">What is 3/4 + 1/6?</span></span>
+        <span><span class="who">guide ›</span> <span data-i18n="ex_a">Before adding, what has to be the same about both fractions?</span></span>
+      </button>
+    </div>
+  </section>
+
+  <section class="band" id="mission">
+    <div class="wrap">
+      <h2 data-i18n="mission_h">Our Mission</h2>
+      <p class="prose" data-i18n="mission_p"></p>
+    </div>
+  </section>
+
+  <section class="band alt" id="team">
+    <div class="wrap">
+      <h2 data-i18n="team_h">Meet the Team</h2>
+      <div class="grid team" id="teamGrid"></div>
+    </div>
+  </section>
+
+  <section class="band" id="pricing">
+    <div class="wrap">
+      <h2 data-i18n="pricing_h">Pricing</h2>
+      <div class="grid tiles" id="planGrid"></div>
+    </div>
+  </section>
+
+  <section class="band alt" id="vr">
+    <div class="wrap">
+      <h2 data-i18n="vr_h">VR Headset Addons</h2>
+      <p class="sub" data-i18n="vr_intro"></p>
+      <div class="grid tiles" id="vrGrid"></div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <span>EduPulse · StudySync</span>
+      <span><span data-i18n="footer_contact">Questions? Write to</span> edupulse@gmail.com</span>
+    </div>
+  </footer>
+</main>
+
+<main class="view" id="v-term" hidden></main>
+<main class="view" id="v-voice" hidden></main>
+<main class="view" id="v-ledger" hidden></main>
+<main class="view" id="v-career" hidden></main>
+<main class="view" id="v-vr" hidden></main>
+
+<!-- Settings -->
+<div class="overlay" id="ovSettings" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="tSettings">
+    <div class="d-head"><h2 id="tSettings" data-i18n="set_h">Select Website Colors</h2><button class="x" type="button" data-close data-i18n-aria="close" aria-label="Close">×</button></div>
+    <div class="d-body">
+      <div><div class="sec-label" data-i18n="set_bg">Background</div><div class="swatches" id="swBg"></div></div>
+      <div><div class="sec-label" data-i18n="set_main">Main</div><div class="swatches" id="swMain"></div></div>
+      <div><button class="btn ghost" id="resetColors" type="button" data-i18n="set_reset">Reset to default</button></div>
+      <div class="field"><label for="langSel" data-i18n="set_lang">Language</label><select id="langSel"></select></div>
+      <label class="check" for="autoLoc"><input type="checkbox" id="autoLoc"><span data-i18n="set_auto">Match language to my device location</span></label>
+    </div>
+  </div>
+</div>
+
+<!-- Terms -->
+<div class="overlay" id="ovTerms" hidden>
+  <div class="dialog wide" role="dialog" aria-modal="true" aria-labelledby="tTerms">
+    <div class="d-head"><h2 id="tTerms" data-i18n="terms_h">Terms of Service</h2><button class="x" type="button" data-close data-i18n-aria="close" aria-label="Close">×</button></div>
+    <div class="d-body">
+      <p class="priv"><a href="https://thefakepepsi.github.io/StudySyncPrivacyPolicy/" target="_blank" rel="noopener" data-i18n="privacy">Privacy Policy</a></p>
+      <p class="demo" id="termsNote"></p>
+      <div class="terms" id="termsBox" tabindex="0"></div>
+      <label class="check" for="termsOk"><input type="checkbox" id="termsOk"><span data-i18n="terms_accept">I have read and accept the Terms of Service and the Privacy Policy.</span></label>
+      <div class="d-foot">
+        <button class="btn ghost" type="button" data-close data-i18n="cancel">Cancel</button>
+        <button class="btn" id="termsGo" type="button" disabled data-i18n="terms_continue">Accept and continue</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Profile -->
+<div class="overlay" id="ovProfile" hidden>
+  <div class="dialog small" role="dialog" aria-modal="true" aria-labelledby="tProfile">
+    <div class="d-head"><h2 id="tProfile" data-i18n="profile_h">Profile</h2><button class="x" type="button" data-close data-i18n-aria="close" aria-label="Close">×</button></div>
+    <div class="d-body center">
+      <div class="avatar big-avatar" aria-hidden="true">J</div>
+      <div><div class="sec-label" data-i18n="username">Username</div><div style="font-family:var(--f-display);font-weight:800;font-size:1.4rem">John Doe</div></div>
+      <button class="btn ghost" id="logoutBtn" type="button" data-i18n="logout">Log out</button>
+    </div>
+  </div>
+</div>
+
+<!-- Purchase (placeholder) -->
+<div class="overlay" id="ovBuy" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="tBuy">
+    <div class="d-head"><h2 id="tBuy"></h2><button class="x" type="button" data-close data-i18n-aria="close" aria-label="Close">×</button></div>
+    <div class="d-body" id="buyBody"></div>
+  </div>
+</div>
+
+<!-- Waypoint: ask an expert -->
+<div class="overlay" id="ovExpert" hidden>
+  <div class="dialog small" role="dialog" aria-modal="true" aria-labelledby="tExpert">
+    <div class="d-head"><h2 id="tExpert" data-i18n="wp_modal_h">Talk to a person</h2><button class="x" type="button" data-close data-i18n-aria="close" aria-label="Close">×</button></div>
+    <div class="d-body">
+      <p data-i18n="wp_modal_p"></p>
+      <a class="btn" id="meetLink" target="_blank" rel="noopener" href="#">Google Meet</a>
+      <a class="btn ghost" id="zoomLink" target="_blank" rel="noopener" href="#">Zoom</a>
+      <button class="btn ghost" type="button" data-close data-i18n="wp_not_now">Not now</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="config.js"></script>
+<script src="terms.js"></script>
+<script src="en.js"></script>
+<script src="hi.js"></script>
+<script src="zh.js"></script>
+<script src="ar.js"></script>
+<script src="ru.js"></script>
+<script src="ml.js"></script>
+<script src="te.js"></script>
+<script src="fr.js"></script>
+<script src="es.js"></script>
+<script src="id.js"></script>
+<script src="more-en.js"></script>
+<script src="more-hi.js"></script>
+<script src="more-zh.js"></script>
+<script src="more-ar.js"></script>
+<script src="more-ru.js"></script>
+<script src="more-ml.js"></script>
+<script src="more-te.js"></script>
+<script src="more-fr.js"></script>
+<script src="more-es.js"></script>
+<script src="more-id.js"></script>
+<script src="app.js"></script>
+<script src="memory.js"></script>
+<script src="ai.js"></script>
+<script src="tools.js"></script>
+<script src="terminal.js"></script>
+<script src="voice.js"></script>
+<script src="ledger.js"></script>
+<script src="career.js"></script>
+<script src="vrhub.js"></script>
+<script>SS.start();</script>
