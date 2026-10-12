@@ -1,8 +1,4 @@
-/* Groq client for StudySync.
-   Models: Main AI and Flashcards use gpt-oss-20b. Syllabus Analyzer, Exam Generator and the
-   Career Counselor use gpt-oss-120b. The Voice Assistant transcribes with whisper-large-v3-turbo.
-   When no Groq key is set, or Groq cannot be reached (for example in a sandboxed preview),
-   text features fall back to Claude if the page is allowed to ask it. */
+
 (function () {
   'use strict';
   var SS = window.SS, t = SS.t;
@@ -18,7 +14,6 @@
   var EFFORT = { main: 'low', flash: 'low', syllabus: 'medium', exam: 'medium', career: 'low' };
   var last = null;
 
-  /* The site uses only the key set in config.js. */
   function keyList() { var k = String((window.SS_CONFIG || {}).GROQ_API_KEY || '').trim(); return k ? [k] : []; }
   function apiKey() { return keyList()[0] || ''; }
   function keyProblem(e) { return !!e && (e.status === 401 || e.status === 403 || e.status === 429); }
